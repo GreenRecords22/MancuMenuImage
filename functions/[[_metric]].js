@@ -15,39 +15,36 @@ export async function onRequest(context) {
     });
   }
 
-  // 2. विलन ASSETS.fetch को हटाया! अब हम डायरेक्ट ग्लोबल fetch मारेंगे आपके लाइव डोमेन पर
-  // इससे क्लाउडफ्लेयर मजबूरन असली फाइल ही लाकर देगा
-  const originalImageURL = `https://mancumenuimage.pages.dev${url.pathname}`;
+  // 2. 🔥 सीधा गिटहब के RAW CDN से इमेज खींचेंगे (कोई लूप या HTML का झंझट ही नहीं!)
+  const githubRawURL = `https://raw.githubusercontent.com/GreenRecords22/MancuMenuImage/main${url.pathname}`;
   
   try {
-    const response = await fetch(originalImageURL, {
-      headers: { "User-Agent": "Cloudflare-Fetch-Fix" }
-    });
+    const response = await fetch(githubRawURL);
 
     if (response.ok) {
-      const contentType = response.headers.get("Content-Type") || "";
+      const arrayBuffer = await response.arrayBuffer();
       
-      // सिर्फ तभी सेव करेंगे जब वो सचमुच इमेज हो और उसमें <h1> जैसा टेक्स्ट न हो
-      if (contentType.startsWith("image/")) {
-        const responseClone = response.clone();
-        const arrayBuffer = await responseClone.arrayBuffer();
-        
-        // सीधे सिंक में सेव करो
-        await env.IMAGE_CACHE.put(url.pathname, arrayBuffer);
-        
-        return new Response(arrayBuffer, {
-          headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "public, max-age=31536000",
-            "Access-Control-Allow-Origin": "*"
-          }
-        });
+      // पक्का सिंक में KV के अंदर राइट करें
+      await env.IMAGE_CACHE.put(url.pathname, arrayBuffer);
+      
+      // तय करें कि हेडर में सही इमेज टाइप जाए
+      let contentType = response.headers.get("Content-Type") || "image/jpeg";
+      if (contentType.includes("text/plain")) {
+        contentType = url.pathname.endsWith(".png") ? "image/png" : "image/jpeg";
       }
+
+      return new Response(arrayBuffer, {
+        headers: {
+          "Content-Type": contentType,
+          "Cache-Control": "public, max-age=31536000",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
     }
   } catch (err) {
-    console.error("Fetch Error: ", err);
+    console.error("GitHub Fetch Error: ", err);
   }
 
-  // अगर कुछ गड़बड़ हो तो नॉर्मल एसेट पर जाने दें
+  // अगर गिटहब पर भी न मिले, तो नॉर्मल फॉलबैक
   return env.ASSETS.fetch(request);
 }
