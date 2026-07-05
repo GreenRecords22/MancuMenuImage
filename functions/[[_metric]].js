@@ -19,12 +19,15 @@ export async function onRequest(context) {
   const response = await env.ASSETS.fetch(request);
 
   if (response.ok) {
-    // इमेज को भविष्य के लिए KV में सेव करें और साथ ही इमेज को आगे पास भी करें
     const responseClone = response.clone();
     const arrayBuffer = await responseClone.arrayBuffer();
     
-    // KV में बैकग्राउंड में सेव करें
-    context.waitUntil(env.IMAGE_CACHE.put(url.pathname, arrayBuffer));
+    // 🔥 बदलाव: बैकग्राउंड के बजाय सीधे 'await' करके पहले KV में सेव करेंगे
+    try {
+      await env.IMAGE_CACHE.put(url.pathname, arrayBuffer);
+    } catch (kvError) {
+      console.error("KV Save Error:", kvError);
+    }
     
     // ओरिजिनल रिस्पॉन्स को सही हेडर्स के साथ वापस भेजें
     return new Response(arrayBuffer, {
@@ -38,4 +41,3 @@ export async function onRequest(context) {
 
   return response;
 }
-
