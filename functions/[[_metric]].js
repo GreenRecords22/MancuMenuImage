@@ -15,8 +15,8 @@ export async function onRequest(context) {
     });
   }
 
-  // 2. 🔥 यहाँ स्पेस पूरी तरह हटा दिया गया है (एकदम परफेक्ट पाथ)
-  const githubRawURL = `https://raw.githubusercontent.com/GreenRecords22/MancuMenuImage/main${url.pathname}`;
+  // 2. 🔥 ALTERNATE METHOD: बिना बैकटिक के सीधे स्ट्रिंग जोड़ना (ताकि स्पेस का कोई चांस ही न बचे)
+  const githubRawURL = "https://raw.githubusercontent.com/GreenRecords22/MancuMenuImage/main" + url.pathname;
   
   try {
     const response = await fetch(githubRawURL);
