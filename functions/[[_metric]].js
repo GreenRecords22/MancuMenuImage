@@ -15,7 +15,7 @@ export async function onRequest(context) {
     });
   }
 
-  // 2. 🔥 सीधा गिटहब के RAW CDN से इमेज खींचेंगे (कोई लूप या HTML का झंझट ही नहीं!)
+  // 2. 🔥 यहाँ स्पेस पूरी तरह हटा दिया गया है (एकदम परफेक्ट पाथ)
   const githubRawURL = `https://raw.githubusercontent.com/GreenRecords22/MancuMenuImage/main${url.pathname}`;
   
   try {
@@ -24,10 +24,9 @@ export async function onRequest(context) {
     if (response.ok) {
       const arrayBuffer = await response.arrayBuffer();
       
-      // पक्का सिंक में KV के अंदर राइट करें
+      // KV के अंदर राइट करें
       await env.IMAGE_CACHE.put(url.pathname, arrayBuffer);
       
-      // तय करें कि हेडर में सही इमेज टाइप जाए
       let contentType = response.headers.get("Content-Type") || "image/jpeg";
       if (contentType.includes("text/plain")) {
         contentType = url.pathname.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -45,6 +44,5 @@ export async function onRequest(context) {
     console.error("GitHub Fetch Error: ", err);
   }
 
-  // अगर गिटहब पर भी न मिले, तो नॉर्मल फॉलबैक
   return env.ASSETS.fetch(request);
 }
